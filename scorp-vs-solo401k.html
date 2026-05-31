@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S-Corp vs Solo 401(k) Tax Calculator (2026)</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;max-width:760px;margin:32px auto;padding:0 20px;color:#0f172a;line-height:1.55}
+  h1{font-size:26px;margin-bottom:4px}
+  .sub{color:#64748b;margin-top:0;font-size:14px}
+  .card{border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin:16px 0}
+  label{display:block;margin:10px 0 4px;font-weight:600;font-size:14px}
+  input[type=number]{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:16px}
+  .row{display:flex;gap:12px;margin-bottom:8px}
+  .row > div{flex:1}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+  th,td{text-align:right;padding:8px 6px;border-bottom:1px solid #e2e8f0}
+  th:first-child,td:first-child{text-align:left}
+  th{color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase}
+  tr.savings td{font-weight:700;color:#15803d;background:#f0fdf4}
+  .legend{font-size:12px;color:#94a3b8;margin-top:10px}
+  a.back{display:inline-block;color:#0ea5e9;margin-bottom:12px;text-decoration:none}
+  footer{margin-top:32px;color:#94a3b8;font-size:12px;text-align:center}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:12px 0}
+  .stat{background:#f8fafc;border-radius:8px;padding:14px;text-align:center}
+  .stat .label{font-size:12px;color:#64748b;text-transform:uppercase}
+  .stat .val{font-size:22px;font-weight:700;color:#0ea5e9;margin:4px 0}
+  .stat .note{font-size:11px;color:#94a3b8}
+  .warn{font-size:13px;color:#b45309;background:#fef3c7;padding:10px 14px;border-radius:6px;margin-top:12px}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← All calculators</a>
+<h1>S-Corp vs Solo 401(k) Tax Calculator</h1>
+<p class="sub">Compare sole proprietor + Solo 401(k) vs S-corp salary/distribution at your actual income. 2026 limits.</p>
+
+<div class="card">
+  <label for="net">Net self-employment income (after expenses, before tax)</label>
+  <input id="net" type="number" value="100000" min="20000" max="500000" step="5000">
+
+  <div class="row">
+    <div>
+      <label for="salary">S-corp reasonable salary</label>
+      <input id="salary" type="number" value="55000" min="20000" max="200000" step="2500">
+    </div>
+    <div>
+      <label for="solo401k_pct">% of compensation into Solo 401(k) employer side (max 25%)</label>
+      <input id="solo401k_pct" type="number" value="25" min="0" max="25" step="1">
+    </div>
+  </div>
+
+  <label for="marginal">Your marginal federal income tax rate (%)</label>
+  <input id="marginal" type="number" value="22" min="10" max="37" step="1">
+  <p class="legend">2026 brackets: 10/12/22/24/32/35/37%. Single filer with $100K AGI → roughly 22%; $180K → 24%; $250K → 32%.</p>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;font-size:16px;color:#0f172a">SE tax + income tax — sole proprietor</h2>
+  <table id="sole"><tbody></tbody></table>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;font-size:16px;color:#0f172a">SE tax + income tax — S-corp (salary + distributions)</h2>
+  <table id="scorp"><tbody></tbody></table>
+  <div id="scorp_warn"></div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;font-size:16px;color:#0f172a">Solo 401(k) max contribution at this salary</h2>
+  <div class="grid" id="solo"></div>
+  <p class="legend">2026 limits: employee deferral $24,500 (base) + $8,000 catch-up (50+) or $11,250 super catch-up (60-63). Employer: up to 25% of compensation. Combined cap $70,000 (or $77,500 / $81,250 with catch-up).</p>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;font-size:16px;color:#0f172a">Net result</h2>
+  <table id="compare"><tbody></tbody></table>
+  <p class="legend">"Annual cost of S-corp" = payroll service ($600-1,200/yr typical) + state-level S-corp fees + your time on quarterly filings. Subtract from S-corp savings to get true net.</p>
+</div>
+
+<footer>Educational tool. Not tax advice. Reasonable salary and entity-structure decisions need a CPA who knows your full situation.</footer>
+
+<script>
+const SE_BASE = 168600; // 2026 SS wage base estimate
+const SE_SS_RATE = 0.124;
+const SE_MEDICARE_RATE = 0.029;
+const FICA_SS_EE = 0.062;
+const FICA_SS_ER = 0.062;
+const FICA_MEDICARE_EE = 0.0145;
+const FICA_MEDICARE_ER = 0.0145;
+
+const fmt = n => '$' + Math.round(n).toLocaleString();
+
+function calc(){
+  const net = +document.getElementById('net').value || 100000;
+  const salary = Math.min(+document.getElementById('salary').value || 55000, net);
+  const soloPct = (+document.getElementById('solo401k_pct').value || 0) / 100;
+  const marginal = (+document.getElementById('marginal').value || 22) / 100;
+
+  // === Sole proprietor ===
+  // SE tax: 92.35% of net SE income subject to SE tax
+  const seBase = net * 0.9235;
+  const seSS = Math.min(seBase, SE_BASE) * SE_SS_RATE;
+  const seMedicare = seBase * SE_MEDICARE_RATE;
+  const seTax = seSS + seMedicare;
+  const seDeduction = seTax / 2; // half deductible above the line
+  const soleSolo401kEmployer = Math.min(soloPct * (net - seDeduction), 70000 - 24500);
+  const soleSolo401kEmployee = Math.min(24500, net - seDeduction);
+  const soleSolo401k = Math.min(soleSolo401kEmployer + soleSolo401kEmployee, 70000);
+  const soleTaxableIncome = Math.max(0, net - seDeduction - soleSolo401k);
+  const soleIncomeTax = soleTaxableIncome * marginal;
+  const soleTotal = seTax + soleIncomeTax;
+  const soleTakeHome = net - soleTotal - soleSolo401k;
+
+  // === S-corp ===
+  // Employee + employer payroll taxes on salary
+  const sSSWage = Math.min(salary, SE_BASE);
+  const sFicaEE = sSSWage * FICA_SS_EE + salary * FICA_MEDICARE_EE;
+  const sFicaER = sSSWage * FICA_SS_ER + salary * FICA_MEDICARE_ER;
+  // S-corp pays employer side; reduces net profit available for distribution
+  const sDistribution = Math.max(0, net - salary - sFicaER);
+  // Solo 401(k) at S-corp: employee on salary, employer up to 25% of salary
+  const scorpSoloEE = Math.min(24500, salary);
+  const scorpSoloER = Math.min(soloPct * salary, 70000 - scorpSoloEE);
+  const scorpSolo401k = Math.min(scorpSoloEE + scorpSoloER, 70000);
+  // Salary minus employee FICA minus 401k employee deferral → flows to taxable wages
+  const scorpTaxableSalary = Math.max(0, salary - scorpSoloEE);
+  // Distribution flows through K-1, taxed at marginal (NO SE tax — that's the point)
+  // 401k employer contribution reduces business income flowing through
+  const scorpPassthrough = Math.max(0, sDistribution - scorpSoloER);
+  const scorpTaxableIncome = scorpTaxableSalary + scorpPassthrough;
+  const scorpIncomeTax = scorpTaxableIncome * marginal;
+  const scorpTotal = sFicaEE + sFicaER + scorpIncomeTax;
+  const scorpTakeHome = net - scorpTotal - scorpSolo401k;
+
+  // Salary-too-low warning (IRS reasonable-compensation rule)
+  const reasonableMin = net * 0.30; // very rough heuristic, real rule is "what would you pay an employee for the same work"
+  const warn = salary < reasonableMin
+    ? `<div class="warn">⚠ Salary at ${(salary/net*100).toFixed(0)}% of net is below the rough "reasonable comp" guideline of 30-50%. IRS audits S-corps that pay too-low salaries to dodge payroll tax. A CPA needs to verify the salary for your specific industry + role.</div>`
+    : '';
+  document.getElementById('scorp_warn').innerHTML = warn;
+
+  // === Render ===
+  document.querySelector('#sole tbody').innerHTML = `
+    <tr><td>Net SE income</td><td>${fmt(net)}</td></tr>
+    <tr><td>SE tax (Social Security)</td><td>${fmt(seSS)}</td></tr>
+    <tr><td>SE tax (Medicare)</td><td>${fmt(seMedicare)}</td></tr>
+    <tr><td>Total SE tax</td><td>${fmt(seTax)}</td></tr>
+    <tr><td>Half-SE deduction</td><td>−${fmt(seDeduction)}</td></tr>
+    <tr><td>Solo 401(k) contribution</td><td>−${fmt(soleSolo401k)}</td></tr>
+    <tr><td>Taxable income</td><td>${fmt(soleTaxableIncome)}</td></tr>
+    <tr><td>Income tax @ ${(marginal*100).toFixed(0)}%</td><td>${fmt(soleIncomeTax)}</td></tr>
+    <tr><td><strong>Total federal tax</strong></td><td><strong>${fmt(soleTotal)}</strong></td></tr>
+  `;
+
+  document.querySelector('#scorp tbody').innerHTML = `
+    <tr><td>Salary (W-2)</td><td>${fmt(salary)}</td></tr>
+    <tr><td>Distribution (K-1)</td><td>${fmt(sDistribution)}</td></tr>
+    <tr><td>Employee FICA on salary</td><td>${fmt(sFicaEE)}</td></tr>
+    <tr><td>Employer FICA on salary</td><td>${fmt(sFicaER)}</td></tr>
+    <tr><td>Solo 401(k) — employee (W-2)</td><td>−${fmt(scorpSoloEE)}</td></tr>
+    <tr><td>Solo 401(k) — employer (25% of salary)</td><td>−${fmt(scorpSoloER)}</td></tr>
+    <tr><td>Taxable salary after 401k</td><td>${fmt(scorpTaxableSalary)}</td></tr>
+    <tr><td>Passthrough income (K-1)</td><td>${fmt(scorpPassthrough)}</td></tr>
+    <tr><td>Income tax @ ${(marginal*100).toFixed(0)}%</td><td>${fmt(scorpIncomeTax)}</td></tr>
+    <tr><td><strong>Total federal tax</strong></td><td><strong>${fmt(scorpTotal)}</strong></td></tr>
+  `;
+
+  document.getElementById('solo').innerHTML = [
+    {label:'Sole Prop max 401(k)', val:soleSolo401k, note:'on ' + fmt(net - seDeduction) + ' base'},
+    {label:'S-Corp max 401(k)', val:scorpSolo401k, note:'on ' + fmt(salary) + ' salary'},
+  ].map(s => `<div class="stat"><div class="label">${s.label}</div><div class="val">${fmt(s.val)}</div><div class="note">${s.note}</div></div>`).join('');
+
+  const diff = soleTotal - scorpTotal;
+  const tHomeDiff = scorpTakeHome - soleTakeHome;
+  document.querySelector('#compare tbody').innerHTML = `
+    <tr><td>Sole prop — take-home (after tax + 401k)</td><td>${fmt(soleTakeHome)}</td></tr>
+    <tr><td>S-corp — take-home (after tax + 401k)</td><td>${fmt(scorpTakeHome)}</td></tr>
+    <tr class="savings"><td>S-corp savings (positive = S-corp wins)</td><td>${fmt(tHomeDiff)}</td></tr>
+  `;
+}
+
+['net','salary','solo401k_pct','marginal'].forEach(id => document.getElementById(id).addEventListener('input', calc));
+calc();
+</script>
+</body>
+</html>
