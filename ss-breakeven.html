@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TODO: replace BUTTONDOWN_USERNAME below with your Buttondown username (see README.md) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -74,19 +73,6 @@
     <tbody></tbody>
   </table>
   <p class="legend">If you live PAST the break-even age, that strategy wins over claiming early. Calculated in nominal (non-COLA) dollars for simplicity.</p>
-</div>
-
-<div class="card">
-  <h2 style="margin-top:0;font-size:16px;color:#0f172a">Want the companion checklist?</h2>
-  <p class="legend" style="margin:0 0 10px">Get the Social Security claiming checklist + calculator updates from Money After 50. No spam, unsubscribe anytime.</p>
-  <form id="subscribe" action="https://buttondown.com/api/emails/embed-subscribe/BUTTONDOWN_USERNAME" method="post" target="subscribe_frame" style="display:flex;gap:12px">
-    <input type="hidden" name="embed" value="1">
-    <input type="hidden" name="tag" value="ma50-ss-breakeven">
-    <input type="email" name="email" required placeholder="you@example.com" style="flex:1">
-    <button type="submit">Subscribe</button>
-  </form>
-  <p id="subscribe_thanks" style="display:none;color:#15803d;font-weight:600;margin:0">Thanks — check your inbox to confirm your subscription.</p>
-  <iframe name="subscribe_frame" style="display:none" title="subscribe"></iframe>
 </div>
 
 <footer>Educational tool. Not financial or tax advice. Consult a qualified financial advisor.</footer>
@@ -164,10 +150,6 @@ function recalc(){
 ['fra','fra_age','life'].forEach(id => document.getElementById(id).addEventListener('input', recalc));
 recalc();
 
-document.getElementById('subscribe').addEventListener('submit', () => {
-  document.getElementById('subscribe').style.display = 'none';
-  document.getElementById('subscribe_thanks').style.display = 'block';
-});
 </script>
 </body>
 </html>

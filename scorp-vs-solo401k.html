@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TODO: replace BUTTONDOWN_USERNAME below with your Buttondown username (see README.md) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -77,19 +76,6 @@
   <h2 style="margin-top:0;font-size:16px;color:#0f172a">Net result</h2>
   <table id="compare"><tbody></tbody></table>
   <p class="legend">"Annual cost of S-corp" = payroll service ($600-1,200/yr typical) + state-level S-corp fees + your time on quarterly filings. Subtract from S-corp savings to get true net.</p>
-</div>
-
-<div class="card">
-  <h2 style="margin-top:0;font-size:16px;color:#0f172a">Want the companion checklist?</h2>
-  <p class="legend" style="margin:0 0 10px">Get the S-corp decision checklist + calculator updates from Freelance Finance. No spam, unsubscribe anytime.</p>
-  <form id="subscribe" action="https://buttondown.com/api/emails/embed-subscribe/BUTTONDOWN_USERNAME" method="post" target="subscribe_frame" style="display:flex;gap:12px">
-    <input type="hidden" name="embed" value="1">
-    <input type="hidden" name="tag" value="ff-scorp-solo401k">
-    <input type="email" name="email" required placeholder="you@example.com" style="flex:1">
-    <button type="submit">Subscribe</button>
-  </form>
-  <p id="subscribe_thanks" style="display:none;color:#15803d;font-weight:600;margin:0">Thanks — check your inbox to confirm your subscription.</p>
-  <iframe name="subscribe_frame" style="display:none" title="subscribe"></iframe>
 </div>
 
 <footer>Educational tool. Not tax advice. Reasonable salary and entity-structure decisions need a CPA who knows your full situation.</footer>
@@ -197,10 +183,6 @@ function calc(){
 ['net','salary','solo401k_pct','marginal'].forEach(id => document.getElementById(id).addEventListener('input', calc));
 calc();
 
-document.getElementById('subscribe').addEventListener('submit', () => {
-  document.getElementById('subscribe').style.display = 'none';
-  document.getElementById('subscribe_thanks').style.display = 'block';
-});
 </script>
 </body>
 </html>

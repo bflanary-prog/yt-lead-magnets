@@ -1,6 +1,6 @@
 # yt-lead-magnets
 
-Static, client-side finance calculators used as YouTube video lead magnets. No backend, no tracking; optional Buttondown email signup form on each calculator (see README.md).
+Static, client-side finance calculators used as YouTube video lead magnets. No backend, no tracking, no network calls (the Buttondown signup form was removed 2026-09-14; see README.md).
 
 ## Stack
 - Vanilla HTML + inline CSS + inline JavaScript. No framework, no build step, no dependencies.
