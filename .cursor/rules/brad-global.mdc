@@ -374,7 +374,7 @@ canonical machine remotely with `ssh <machine>` + tmux.
 | account-agent | **main** | Playwright + ProtonMail Bridge live here. |
 | yacht_search | **main** — migration pending | Should be mini (boat), but `com.ops.yacht-search` has four main-only deps: ProtonVPN WireGuard tunnel, the Lima fetch VM `com.ops.fetchvm`, a Python venv, and Scrape.do/Scrapfly keys in main's Keychain. Migration is a port, not a flag flip. |
 | ops-dashboard | both | Read-only on either. |
-| contract-analysis | **main** (Air) | Declared 2026-08-23. Runs from `~/Projects/contract_comparison/backend` on **:8001**, labels `com.bflanary.contract-analysis.{backend,frontend}`. mini has a second live deployment of the *same repo* (`~/Projects/contract-analysis`, **:8000**, labels `com.contractanalysis.*`) — park it rather than leaving two. |
+| contract-analysis | **main** (Air) | Declared 2026-08-23. Runs from `~/Projects/contract-analysis/backend` on **:8001**, labels `com.bflanary.contract-analysis.{backend,frontend}`. mini has a second live deployment of the *same repo* (`~/Projects/contract-analysis`, **:8000**, labels `com.contractanalysis.*`) — park it rather than leaving two. |
 | slated | either | Deploy remote; declare active machine in `session_last.md`. |
 | AI-Crew · printing-press | either | Pure code, no per-machine state. |
 
