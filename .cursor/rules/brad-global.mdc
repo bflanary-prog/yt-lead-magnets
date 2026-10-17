@@ -73,6 +73,8 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+- **Scripts that change live systems stop at the first failed step.** Check each API result code. Make a dependent change (a filter that targets a new folder, a DNS record that points at a new host) only after the prerequisite is read back as existing. Check vendor limits before designing the structure. (2026-10-15: Proton refused subfolders past 3 levels, the script carried on, and the live mail filter pointed at folders that didn't exist for about 2 minutes.)
+
 ## 5. Git — "commit" is not push; never scoop other sessions
 
 Applies on air, mini, and remote/Cursor sessions. Full write-up:
@@ -139,6 +141,10 @@ Simple and clear with enough context to be meaningful. Not terse to the point of
 - Polished — no rough edges in anything that goes out
 - Audience-aware: adjust formality to the context (e.g., more formal for finance/enterprise, more casual for lifestyle/consumer content)
 - Consistent and customer-centric
+
+## Memory housekeeping is silent (Brad, 2026-10-13)
+
+Manage `MEMORY.md` size, archiving, index rebuilds and memory commits quietly. Do not report byte counts, ceilings, pruning or index checks in replies. Mention memory only when something critical happens (data loss, a push failure, a conflict that needs his call).
 
 ## Formatting Preferences
 
@@ -230,8 +236,13 @@ It was a rule about **quantity**, and quantity is the wrong axis:
   disposition (`rotated|accepted|expired`), never by rewriting a transcript.
 - **A finding is not a credential.** Triage with `--triage` before assigning
   severity — see `feedback_verify_finding_is_real.md`.
-- **Arbitrary interpreters.** A script written to a file and then executed
-  escapes both this hook and the Write/Edit guard.
+- **Throwaway scripts are now gated (2026-10-15); committed ones are not.** A
+  script written in the same command, fed on stdin, or sitting under /tmp or
+  /var/folders that reads a secret must run with output filtered to approved
+  line prefixes, discarded, or under `redact` — a Playwright error log printed a
+  Resend password that way. Committed project scripts (self_review, pipelines)
+  read secrets to USE them and are exempt, so a committed script that prints a
+  value is still uncovered.
 - **argv leakage is out of scope and accepted.** `curl -H "x-api-key: $(…)"` is
   allowed by design; the value is visible in `ps` on the local machine.
 - **It prevents; it does not detect.** Nothing scans existing transcripts. See
@@ -288,6 +299,14 @@ entry themselves:
 
 Pointer only — never a value, in the note or anywhere else.
 
+**A note that says what an account or token can do is a claim, not a fact.**
+Unless the entry carries `"verified": "YYYY-MM-DD"`, test the claim (one API
+call, one Proton field check) before repeating it to Brad, then add the date.
+**Enforced by:** `~/Projects/ops-dashboard/scripts/self_review.py` check
+`index-unverified-claims` (lists undated claims weekly). Origin 2026-10-15: two
+undated notes ("Google OAuth only", "User API Tokens Edit") were relayed as fact
+and both were wrong for the task.
+
 ## 5. Exposed secrets — secure in place, do NOT rotate
 
 **Brad's standing decision (2026-06-07): do not rotate keys, and do not surface
@@ -298,8 +317,12 @@ rotate-first guidance. This supersedes the older "flag for rotation" practice
 and its 2026-05-17 rotate-list.
 
 So: never write "rotate" / ROTATE flags into docs, the index, or memory. Raise
-rotation **only on an actual problem** — anomalous or unauthorized usage at the
-provider, a *new* exposure, or a secret-scanning alert.
+rotation **only when a secret has left this machine** — pushed to a remote,
+posted or sent to a third party, or flagged by a scanner or by the provider
+(anomalous or unauthorized usage). A leak into a local transcript, a local file
+or brad-kb is **cleaned up in place** (redact, purge, report the scope once) and
+is **not** a rotation trigger (Brad, 2026-10-15, after a session raised rotation
+for a password that only reached its own transcript).
 
 Everything else in the hygiene stack still applies: don't paper over a leak
 (clean up plaintext and history when found), no plaintext at rest, and the
@@ -377,6 +400,7 @@ canonical machine remotely with `ssh <machine>` + tmux.
 | contract-analysis | **main** (Air) | Declared 2026-08-23. Runs from `~/Projects/contract-analysis/backend` on **:8001**, labels `com.bflanary.contract-analysis.{backend,frontend}`. mini has a second live deployment of the *same repo* (`~/Projects/contract-analysis`, **:8000**, labels `com.contractanalysis.*`) — park it rather than leaving two. |
 | slated | either | Deploy remote; declare active machine in `session_last.md`. |
 | AI-Crew · printing-press | either | Pure code, no per-machine state. |
+| hotndirty-site | either | Code either machine. Secrets are split: Cloudflare token `cloudflare/admin_api_token` is in **air's** Keychain only (from mini: `ssh main 'sudo launchctl asuser $(id -u) <script>'`); Resend key + Turnstile secret (`hotndirty-site/*`) are in **mini's**. Production = Cloudflare Worker deployed by GitHub Actions (planned), not launchd. |
 
 **Boat projects are mini-canonical** (Brad, 2026-06-25): gnav, helm,
 voyage_planning, opencpn.
@@ -468,6 +492,10 @@ real.
 For a web page, render the D2 to SVG at build time and embed it rather than
 shipping a diagram library to the browser — see
 [`ops-dashboard/scripts/render_diagrams.sh`](../../Projects/ops-dashboard/scripts/render_diagrams.sh).
+
+## Every element traces to a source
+
+Position, size, rating and cable gauge in a drawing come from a plan, a data plate, a manual or Brad. When a location is unknown, show the item at compartment level or label it TBD. Never pin it to a guessed spot, and never invent a value to fill a label. (2026-10-17, session c6594631: guessed leader lines, an "INV?" zone drawn in a stateroom, and invented 6 AWG and 4 AWG generator feeders all had to be removed.)
 
 ## Tool choice
 - **Default → D2** (`d2`): text → polished dark diagram, native PDF+PNG.

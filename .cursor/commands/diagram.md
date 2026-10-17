@@ -36,6 +36,10 @@ For a web page, render the D2 to SVG at build time and embed it rather than
 shipping a diagram library to the browser — see
 [`ops-dashboard/scripts/render_diagrams.sh`](../../Projects/ops-dashboard/scripts/render_diagrams.sh).
 
+## Every element traces to a source
+
+Position, size, rating and cable gauge in a drawing come from a plan, a data plate, a manual or Brad. When a location is unknown, show the item at compartment level or label it TBD. Never pin it to a guessed spot, and never invent a value to fill a label. (2026-10-17, session c6594631: guessed leader lines, an "INV?" zone drawn in a stateroom, and invented 6 AWG and 4 AWG generator feeders all had to be removed.)
+
 ## Tool choice
 - **Default → D2** (`d2`): text → polished dark diagram, native PDF+PNG.
 - **Icon-rich cloud/infra → mingrammer `diagrams`** (Python; interpreter `~/.diagram-tools/venv/bin/python`, needs Graphviz `dot`).
