@@ -448,6 +448,26 @@ rsync -av mini:~/.ops_metrics/metrics.db ~/.ops_metrics/metrics_mini.db   # read
 rsync -av mini:~/Projects/youtube-automation/work/<channel>/<run_id>/ /tmp/inspect-<run_id>/
 ```
 
+## Texting Brad from a session — and getting his reply
+
+Any session on either machine texts Brad, and receives his answer, with one command.
+It always sends from **mini**, so never call `osascript` on the Air to text him: a
+send from the Air looks like Brad typing, and the router would take it as his reply.
+
+```bash
+~/.claude/bin/text-brad "Video is ready. Send it to Jim too?"   # prints SENT tag=xx | ERROR ...
+~/.claude/bin/text-brad --wait 1500     # run in the background; prints "REPLY: ..." or "TIMEOUT"
+```
+
+- Each session gets a two-letter tag (`fn: ...`). Brad replies normally. His reply goes
+  to the session that texted most recently, or to the one he inline-Replied to.
+- `--wait` returns after one reply. Re-run it to keep listening. It dies with the session.
+- Read the printed line, not the exit code: `ssh mini` always exits 0.
+- Cursor agents: export `TEXT_BRAD_SESSION=<any stable name>` first (Claude Code sets its own id).
+- Router: launchd `com.bflanary.text-router` on mini, code `~/.claude/text-router/`.
+- **Messages error 22 = Brad's number is not registered for iMessage.** After a
+  carrier or SIM change, check iPhone Messages > Send & Receive (2026-10-18).
+
 ## Sudo
 
 Narrow NOPASSWD entry per machine at `/etc/sudoers.d/<user>`: tailscale CLI,
